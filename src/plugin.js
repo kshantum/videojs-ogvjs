@@ -8,11 +8,6 @@ const OGVLoader = ogv.OGVLoader;
 const OGVPlayer = ogv.OGVPlayer;
 const Tech = videojs.getComponent('Tech');
 
-const androidOS = 'Android';
-const iPhoneOS = 'iPhoneOS';
-const iPadOS = 'iPadOS';
-const otherOS = 'Other';
-
 /**
  * Object.defineProperty but "lazy", which means that the value is only set after
  * it retrieved the first time, rather than being set right away.
@@ -46,25 +41,6 @@ const defineLazyProperty = (obj, key, getValue, setter = true) => {
 };
 
 /**
- * Get the device's OS.
- *
- * @return {string} Device's OS.
- */
-const getDeviceOS = () => {
-    /* global navigator */
-    const ua = navigator.userAgent;
-
-    if (/android/i.test(ua)) {
-        return androidOS;
-    } else if (/iPad|iPhone|iPod/.test(ua)) {
-        return iPhoneOS;
-    } else if ((navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-        return iPadOS;
-    }
-    return otherOS;
-};
-
-/**
  * OgvJS Media Controller - Wrapper for ogv.js Media API
  *
  * @mixes Tech~SourceHandlerAdditions
@@ -81,19 +57,23 @@ class OgvJS extends Tech {
     constructor(options, ready) {
         super(options, ready);
 
-        this.el_.src = options.source.src;
+        if (options.source) {
+            this.el_.src = options.source.src;
+        }
         OgvJS.setIfAvailable(this.el_, 'autoplay', options.autoplay);
         OgvJS.setIfAvailable(this.el_, 'loop', options.loop);
         OgvJS.setIfAvailable(this.el_, 'poster', options.poster);
         OgvJS.setIfAvailable(this.el_, 'preload', options.preload);
 
         this.on('loadedmetadata', () => {
-            if (getDeviceOS() === iPhoneOS) {
+            if (videojs.browser.IS_IPHONE) {
                 // iPhoneOS add some inline styles to the canvas, we need to remove it.
                 const canvas = this.el_.getElementsByTagName('canvas')[0];
 
-                canvas.style.removeProperty('width');
-                canvas.style.removeProperty('margin');
+                if (canvas) {
+                    canvas.style.removeProperty('width');
+                    canvas.style.removeProperty('margin');
+                }
             }
         });
 
@@ -216,7 +196,21 @@ class OgvJS extends Tech {
             return this.el_.duration;
         }
 
-        return 0;
+        return NaN;
+    }
+
+    /**
+     * Reset the tech, stopping playback and releasing the current source
+     * so a new OGVPlayer decode session can start cleanly.
+     *
+     * @method reset
+     */
+    reset() {
+        if (this.el_) {
+            this.el_.pause();
+            this.el_.src = '';
+            this.el_.load();
+        }
     }
 
     /**
@@ -249,7 +243,7 @@ class OgvJS extends Tech {
      */
     setVolume(percentAsDecimal) {
         // Apple does not allow iOS and iPadOS devices to set the volume on UI.
-        if (getDeviceOS() !== iPhoneOS && getDeviceOS() !== iPadOS && this.el_.hasOwnProperty('volume')) {
+        if (!videojs.browser.IS_IPHONE && !videojs.browser.IS_IPAD && this.el_.hasOwnProperty('volume')) {
             this.el_.volume = percentAsDecimal;
         }
     }
@@ -611,7 +605,7 @@ OgvJS.isSupported = () => {
  * @return {string} 'probably', 'maybe', or '' (empty string)
  */
 OgvJS.canPlayType = (type) => {
-    return (type.indexOf('/ogg') !== -1 || type.indexOf('/webm')) ? 'maybe' : '';
+    return (type.indexOf('/ogg') !== -1 || type.indexOf('/webm') !== -1) ? 'maybe' : '';
 };
 
 /**
@@ -632,7 +626,7 @@ OgvJS.canPlaySource = (srcObj) => {
  * @return {boolean} True if volume can be controlled.
  */
 OgvJS.canControlVolume = () => {
-    if (getDeviceOS() === iPhoneOS || getDeviceOS() === iPadOS) {
+    if (videojs.browser.IS_IPHONE || videojs.browser.IS_IPAD) {
         return false;
     }
     const p = new OGVPlayer();

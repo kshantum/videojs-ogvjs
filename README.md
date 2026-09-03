@@ -8,6 +8,8 @@
 
 # VideoJS-Ogvjs
 
+[![CI](https://github.com/HuongNV13/videojs-ogvjs/actions/workflows/ci.yml/badge.svg)](https://github.com/HuongNV13/videojs-ogvjs/actions/workflows/ci.yml)
+
 [Ogv.js](https://github.com/brion/ogv.js/) Tech plugin for [Video.JS](https://www.videojs.com).
 
 With this Tech plugin, Video.JS can play OGG/WEBM file on the browsers that do not support it (Safari).
