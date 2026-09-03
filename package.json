@@ -1,6 +1,6 @@
 {
   "name": "videojs-ogvjs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Huong Nguyen <huongnv13@gmail.com>",
   "description": "Ogv.jv Tech plugin for Video.JS",
   "main": "dist/Videojs-Ogvjs.js",
